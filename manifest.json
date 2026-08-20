@@ -1,6 +1,6 @@
 {
-  "short_name": "TeachBoard",
-  "name": "TeachBoard Pro - Interactive Whiteboard",
+  "short_name": "BlackBoard",
+  "name": "BlackBoard Pro Max",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3429/3429402.png",
@@ -14,8 +14,9 @@
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "scope": "./",
+  "background_color": "#064e3b",
+  "theme_color": "#064e3b",
   "display": "standalone",
   "orientation": "any"
 }
