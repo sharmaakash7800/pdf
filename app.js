@@ -73,7 +73,7 @@
       width: 100%;
     }
 
-    /* Responsive Page Wrapper */
+    /* Responsive HD Page Box */
     .page-wrapper {
       position: relative; 
       width: 900px;
@@ -83,6 +83,7 @@
       border-radius: 12px; 
       background: #ffffff;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     canvas { 
@@ -90,14 +91,14 @@
       position: absolute; 
       top: 0; 
       left: 0; 
-      width: 100%; 
-      height: 100%; 
+      width: 100% !important; 
+      height: 100% !important; 
       border-radius: 12px; 
     }
     .pdf-canvas-layer { z-index: 1; pointer-events: none; }
     .draw-canvas-layer { z-index: 2; pointer-events: auto; touch-action: none; background: transparent; }
 
-    /* Guaranteed Visible Text Input Box */
+    /* On-Screen Text Box */
     .board-text-input {
       position: absolute; 
       z-index: 9999; 
@@ -140,7 +141,7 @@
       border-radius: 16px;
     }
 
-    /* Desktop Vertical Toolbar */
+    /* Desktop Left Toolbar */
     #sidebar-container {
       position: fixed; 
       top: 14px; 
@@ -289,7 +290,7 @@
     }
     input[type="file"] { display: none; }
 
-    /* Mobile Responsive Dock Classes */
+    /* Mobile Responsive Classes */
     body.is-mobile #board-wrapper {
       padding: 55px 6px 90px 6px !important;
     }
@@ -621,11 +622,20 @@
       boardWrapper.classList.remove('hand-grabbing');
     });
 
+    // Dynamic High-Res DPI Canvas Setup
     function setupPage(pageWrapper) {
       const canvas = pageWrapper.querySelector('.draw-canvas-layer');
+      const dpr = Math.max(window.devicePixelRatio || 1, 2.5);
       const rect = pageWrapper.getBoundingClientRect();
-      canvas.width = rect.width / currentScale;
-      canvas.height = rect.height / currentScale;
+      const baseW = rect.width / currentScale;
+      const baseH = rect.height / currentScale;
+
+      canvas.width = baseW * dpr;
+      canvas.height = baseH * dpr;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
       historyMap.set(canvas, []);
       activeCanvas = canvas;
       attachDrawing(canvas, pageWrapper);
@@ -648,7 +658,7 @@
           const img = new Image();
           img.onload = function() {
             const ctx = activeCanvas.getContext('2d');
-            const maxW = Math.min(300, activeCanvas.width * 0.7);
+            const maxW = Math.min(300, (activeCanvas.width / (window.devicePixelRatio || 1)) * 0.7);
             const scale = maxW / img.width;
             const targetW = img.width * scale;
             const targetH = img.height * scale;
@@ -661,6 +671,7 @@
       }
     });
 
+    // ULTRA HD PDF RENDERING ENGINE (Crystal Clear Fix)
     document.getElementById('pdf-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && file.type === "application/pdf") {
@@ -669,30 +680,45 @@
           const typedarray = new Uint8Array(this.result);
           pdfjsLib.getDocument(typedarray).promise.then(doc => {
             renderContainer.innerHTML = '';
+            const dpr = Math.max(window.devicePixelRatio || 1, 2.5);
+
             for (let i = 1; i <= doc.numPages; i++) {
               doc.getPage(i).then(page => {
+                // Layout Viewport for page container
                 const viewport = page.getViewport({ scale: 1.0 });
+                // High-Resolution Viewport for rendering crisp text
+                const hdViewport = page.getViewport({ scale: 1.0 * dpr });
+
                 const pageWrapper = document.createElement('div');
                 pageWrapper.className = 'page-wrapper';
                 pageWrapper.style.width = `${viewport.width}px`;
                 pageWrapper.style.height = `${viewport.height}px`;
 
+                // HD PDF Canvas
                 const pCanvas = document.createElement('canvas');
                 pCanvas.className = 'pdf-canvas-layer';
-                pCanvas.width = viewport.width;
-                pCanvas.height = viewport.height;
+                pCanvas.width = hdViewport.width;
+                pCanvas.height = hdViewport.height;
                 const pCtx = pCanvas.getContext('2d');
 
+                // HD Draw Canvas
                 const dCanvas = document.createElement('canvas');
                 dCanvas.className = 'draw-canvas-layer';
-                dCanvas.width = viewport.width;
-                dCanvas.height = viewport.height;
+                dCanvas.width = hdViewport.width;
+                dCanvas.height = hdViewport.height;
+                const dCtx = dCanvas.getContext('2d');
+                dCtx.scale(dpr, dpr);
 
                 pageWrapper.appendChild(pCanvas);
                 pageWrapper.appendChild(dCanvas);
                 renderContainer.appendChild(pageWrapper);
 
-                page.render({ canvasContext: pCtx, viewport: viewport });
+                // Render Crisp HD PDF Text
+                page.render({ 
+                  canvasContext: pCtx, 
+                  viewport: hdViewport 
+                });
+
                 historyMap.set(dCanvas, []);
                 activeCanvas = dCanvas;
                 attachDrawing(dCanvas, pageWrapper);
@@ -704,9 +730,7 @@
       }
     });
 
-    // ROBUST PERMANENT TEXT INLINE ENGINE (Guaranteed Render Fix)
     function createInlineTextBox(wrapper, canvas, x, y) {
-      // Remove any leftover input
       const existing = wrapper.querySelector('.board-text-input');
       if (existing) existing.remove();
 
@@ -721,7 +745,6 @@
 
       wrapper.appendChild(textEl);
       
-      // Auto-focus with cursor
       setTimeout(() => {
         textEl.focus();
       }, 50);
@@ -948,7 +971,6 @@
         }
       }
 
-      // Mouse Handlers
       function handleMouseDown(e) {
         if (currentTool === 'hand') return;
         activeCanvas = canvas;
@@ -1027,13 +1049,13 @@
 
           if (currentShape === 'rect') ctx.strokeRect(startX, startY, w, h);
           else if (currentShape === 'circle') { ctx.arc(startX, startY, Math.sqrt(w*w + h*h), 0, 2*Math.PI); ctx.stroke(); }
-          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke(); }
+          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
           else if (currentShape === 'arrow') {
-            ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke();
+            ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
             let angle = Math.atan2(h, w);
-            ctx.lineTo(x - 12 * Math.cos(angle - Math.PI / 6), y - 12 * Math.sin(angle - Math.PI / 6));
-            ctx.moveTo(x, y);
-            ctx.lineTo(x - 12 * Math.cos(angle + Math.PI / 6), y - 12 * Math.sin(angle + Math.PI / 6));
+            ctx.lineTo(pos.x - 12 * Math.cos(angle - Math.PI / 6), pos.y - 12 * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(pos.x, pos.y);
+            ctx.lineTo(pos.x - 12 * Math.cos(angle + Math.PI / 6), pos.y - 12 * Math.sin(angle + Math.PI / 6));
             ctx.stroke();
           }
         }
