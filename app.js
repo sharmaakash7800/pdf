@@ -138,6 +138,7 @@
       border-radius: 16px;
     }
 
+    /* Desktop Left Toolbar */
     #sidebar-container {
       position: fixed; 
       top: 14px; 
@@ -245,29 +246,30 @@
     }
     .pop-item:hover { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
 
-    /* Interactive Calculator Popup */
+    /* WORKING CALCULATOR POPUP */
     #calc-panel {
       position: fixed;
       top: 60px;
       left: 70px;
-      z-index: 999998;
-      width: 230px;
+      z-index: 999999;
+      width: 240px;
       padding: 12px;
       display: none;
       flex-direction: column;
       gap: 8px;
+      pointer-events: auto;
     }
     #calc-panel.open { display: flex; }
 
     .calc-screen {
       width: 100%;
-      height: 38px;
+      height: 40px;
       background: #f8fafc;
-      border: 1px solid #cbd5e1;
+      border: 1.5px solid #cbd5e1;
       border-radius: 8px;
       text-align: right;
-      padding: 6px 10px;
-      font-size: 16px;
+      padding: 6px 12px;
+      font-size: 18px;
       font-weight: 700;
       color: #0f172a;
       outline: none;
@@ -282,7 +284,7 @@
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       background: #ffffff;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       color: #1e293b;
       cursor: pointer;
@@ -292,10 +294,10 @@
       transition: 0.1s;
     }
     .calc-btn:hover { background: #f1f5f9; }
-    .calc-btn:active { transform: scale(0.96); }
-    .calc-btn.op-btn { background: #eff6ff; color: var(--primary); }
-    .calc-btn.eq-btn { background: var(--primary); color: #ffffff; grid-column: span 2; }
-    .calc-btn.c-btn { background: #fee2e2; color: #ef4444; }
+    .calc-btn:active { transform: scale(0.95); background: #e2e8f0; }
+    .calc-btn.op-btn { background: #eff6ff; color: var(--primary); font-weight: 700; }
+    .calc-btn.eq-btn { background: var(--primary); color: #ffffff; grid-column: span 2; font-weight: 700; }
+    .calc-btn.c-btn { background: #fee2e2; color: #ef4444; font-weight: 700; }
 
     .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .stamp-btn { 
@@ -338,6 +340,7 @@
     }
     input[type="file"] { display: none; }
 
+    /* Mobile Responsive Layout */
     body.is-mobile #board-wrapper {
       padding: 55px 6px 90px 6px !important;
     }
@@ -441,35 +444,35 @@
 
   <!-- Calculator Popup -->
   <div class="glass-pill" id="calc-panel">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
       <span class="pop-title"><i class="fa-solid fa-calculator" style="margin-right: 4px;"></i> Calculator</span>
-      <i class="fa-solid fa-xmark" id="close-calc-btn" style="cursor: pointer; font-size: 13px; color: #94a3b8;"></i>
+      <i class="fa-solid fa-xmark" id="close-calc-btn" style="cursor: pointer; font-size: 15px; color: #94a3b8; padding: 4px;"></i>
     </div>
     <input type="text" class="calc-screen" id="calc-display" readonly value="0">
     <div class="calc-grid">
-      <button class="calc-btn c-btn" onclick="calcAction('C')">C</button>
-      <button class="calc-btn op-btn" onclick="calcAction('/')">÷</button>
-      <button class="calc-btn op-btn" onclick="calcAction('*')">×</button>
-      <button class="calc-btn op-btn" onclick="calcAction('-')">−</button>
+      <button class="calc-btn c-btn" data-val="C">C</button>
+      <button class="calc-btn op-btn" data-val="÷">÷</button>
+      <button class="calc-btn op-btn" data-val="×">×</button>
+      <button class="calc-btn op-btn" data-val="-">−</button>
       
-      <button class="calc-btn" onclick="calcAction('7')">7</button>
-      <button class="calc-btn" onclick="calcAction('8')">8</button>
-      <button class="calc-btn" onclick="calcAction('9')">9</button>
-      <button class="calc-btn op-btn" onclick="calcAction('+')">+</button>
+      <button class="calc-btn" data-val="7">7</button>
+      <button class="calc-btn" data-val="8">8</button>
+      <button class="calc-btn" data-val="9">9</button>
+      <button class="calc-btn op-btn" data-val="+">+</button>
       
-      <button class="calc-btn" onclick="calcAction('4')">4</button>
-      <button class="calc-btn" onclick="calcAction('5')">5</button>
-      <button class="calc-btn" onclick="calcAction('6')">6</button>
-      <button class="calc-btn op-btn" onclick="calcAction('%')">%</button>
+      <button class="calc-btn" data-val="4">4</button>
+      <button class="calc-btn" data-val="5">5</button>
+      <button class="calc-btn" data-val="6">6</button>
+      <button class="calc-btn op-btn" data-val="%">%</button>
       
-      <button class="calc-btn" onclick="calcAction('1')">1</button>
-      <button class="calc-btn" onclick="calcAction('2')">2</button>
-      <button class="calc-btn" onclick="calcAction('3')">3</button>
-      <button class="calc-btn" onclick="calcAction('.')">.</button>
+      <button class="calc-btn" data-val="1">1</button>
+      <button class="calc-btn" data-val="2">2</button>
+      <button class="calc-btn" data-val="3">3</button>
+      <button class="calc-btn" data-val=".">.</button>
       
-      <button class="calc-btn" onclick="calcAction('0')">0</button>
-      <button class="calc-btn" onclick="calcAction('00')">00</button>
-      <button class="calc-btn eq-btn" onclick="calcSolve()">=</button>
+      <button class="calc-btn" data-val="0">0</button>
+      <button class="calc-btn" data-val="00">00</button>
+      <button class="calc-btn eq-btn" id="calc-equals-btn">=</button>
     </div>
   </div>
 
@@ -597,7 +600,11 @@
     }
     document.addEventListener('click', () => closeAllPanels());
 
-    // Calculator Logic
+    // ISOLATED ROBUST CALCULATOR ENGINE
+    calcPanel.addEventListener('click', (e) => e.stopPropagation());
+    calcPanel.addEventListener('mousedown', (e) => e.stopPropagation());
+    calcPanel.addEventListener('touchstart', (e) => e.stopPropagation());
+
     document.getElementById('btn-calc-trigger').addEventListener('click', (e) => {
       e.stopPropagation();
       const isOpen = calcPanel.classList.contains('open');
@@ -610,26 +617,52 @@
       calcPanel.classList.remove('open');
     });
 
-    function calcAction(val) {
-      const display = document.getElementById('calc-display');
-      if (val === 'C') {
-        display.value = '0';
-      } else if (display.value === '0' && val !== '.') {
-        display.value = val;
-      } else {
-        display.value += val;
-      }
-    }
+    const calcDisplay = document.getElementById('calc-display');
+    let isCalculated = false;
 
-    function calcSolve() {
-      const display = document.getElementById('calc-display');
+    document.querySelectorAll('.calc-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = btn.getAttribute('data-val');
+        if (!val) return; // Equals button handled separately
+
+        if (val === 'C') {
+          calcDisplay.value = '0';
+          isCalculated = false;
+          return;
+        }
+
+        if (isCalculated && !['+', '-', '×', '÷', '%'].includes(val)) {
+          calcDisplay.value = val;
+          isCalculated = false;
+          return;
+        }
+        isCalculated = false;
+
+        if (calcDisplay.value === '0' && val !== '.') {
+          calcDisplay.value = val;
+        } else {
+          calcDisplay.value += val;
+        }
+      });
+    });
+
+    document.getElementById('calc-equals-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
       try {
-        const cleanExpr = display.value.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-        display.value = Function(`'use strict'; return (${cleanExpr})`)();
+        let expr = calcDisplay.value;
+        expr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+        expr = expr.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+        
+        // Secure Calculation
+        const result = Function(`'use strict'; return (${expr})`)();
+        calcDisplay.value = Number.isFinite(result) ? (Math.round(result * 100000000) / 100000000).toString() : 'Error';
+        isCalculated = true;
       } catch (err) {
-        display.value = 'Error';
+        calcDisplay.value = 'Error';
+        isCalculated = true;
       }
-    }
+    });
 
     document.getElementById('btn-stroke-trigger').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -740,7 +773,7 @@
       boardWrapper.classList.remove('hand-grabbing');
     });
 
-    // SAFE CANVAS SETUP (Preserves Existing Drawings across Resizes)
+    // SAFE CANVAS SETUP
     function setupPage(pageWrapper, preserveContent = true) {
       const canvas = pageWrapper.querySelector('.draw-canvas-layer');
       const dpr = Math.max(window.devicePixelRatio || 1, 2.5);
