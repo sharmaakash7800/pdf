@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>BlackBoard Pro Max</title>
   
   <link rel="manifest" href="manifest.json">
@@ -72,7 +72,6 @@
       width: 100%;
     }
 
-    /* Whiteboard Box (Default White) */
     .page-wrapper {
       position: relative; 
       width: 900px;
@@ -96,7 +95,7 @@
     .pdf-canvas-layer { z-index: 1; pointer-events: none; }
     .draw-canvas-layer { z-index: 2; pointer-events: auto; touch-action: none; background: transparent; }
 
-    /* On-Screen Text Input Box */
+    /* On-Screen Text Box */
     .board-text-input {
       position: absolute; 
       z-index: 10; 
@@ -116,7 +115,7 @@
       word-break: break-word;
     }
 
-    /* Board Background Options */
+    /* Board Themes */
     .bg-white { background-color: #ffffff !important; }
     .bg-yellow { background-color: #fef9c3 !important; }
     .bg-blue { background-color: #eff6ff !important; }
@@ -128,7 +127,7 @@
       background-size: 20px 20px !important;
     }
 
-    /* Frosted Glass UI */
+    /* Glass UI */
     .glass-pill {
       background: var(--glass-bg); 
       backdrop-filter: blur(16px);
@@ -138,6 +137,7 @@
       border-radius: 16px;
     }
 
+    /* DESKTOP TOOLBAR (Large Screens) */
     #sidebar-container {
       position: fixed; 
       top: 14px; 
@@ -245,7 +245,6 @@
     }
     .pop-item:hover { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
 
-    /* Stamps */
     .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .stamp-btn { 
       font-size: 20px; 
@@ -288,25 +287,27 @@
     }
     input[type="file"] { display: none; }
 
-    /* Mobile Responsive Overrides */
-    @media (max-width: 768px) {
+    /* GUARANTEED MOBILE DOCK (Triggers on all Mobile/Tablets & Screen <= 960px) */
+    @media screen and (max-width: 960px), (pointer: coarse) and (orientation: portrait) {
       #board-wrapper {
-        padding: 60px 8px 85px 8px !important;
+        padding: 55px 6px 85px 6px !important;
       }
       
       .page-wrapper {
         width: 100% !important;
-        height: 72vh !important;
+        height: 70vh !important;
         max-width: 100% !important;
       }
 
+      /* Move Sidebar to Bottom Horizontal Bar */
       #sidebar-container {
         top: auto !important; 
-        bottom: 10px !important; 
+        bottom: 12px !important; 
         left: 50% !important; 
+        right: auto !important;
         transform: translateX(-50%) !important;
         width: calc(100vw - 20px) !important;
-        max-width: 480px !important;
+        max-width: 500px !important;
         flex-direction: row !important; 
         justify-content: space-between !important;
         gap: 6px !important;
@@ -316,35 +317,37 @@
         flex-direction: row !important; 
         width: calc(100% - 46px) !important; 
         max-width: none !important;
-        height: 48px !important; 
-        padding: 0 8px !important; 
+        height: 46px !important; 
+        padding: 0 6px !important; 
         overflow-x: auto !important; 
         overflow-y: hidden !important;
-        gap: 8px !important;
+        gap: 6px !important;
       }
 
       .separator { 
         width: 1px !important; 
-        height: 22px !important; 
+        height: 20px !important; 
         margin: 0 2px !important; 
       }
 
+      /* Zoom Dock moved to Top-Right */
       #bottom-dock {
         top: 10px !important; 
         bottom: auto !important; 
         right: 10px !important; 
         left: auto !important; 
         transform: none !important; 
-        padding: 4px 10px !important;
+        padding: 4px 8px !important;
       }
 
+      /* Popups open upwards from bottom bar */
       .pop-panel {
         top: auto !important; 
-        bottom: 68px !important; 
-        left: 14px !important; 
-        right: 14px !important;
+        bottom: 66px !important; 
+        left: 12px !important; 
+        right: 12px !important;
         min-width: auto !important;
-        max-height: 50vh !important;
+        max-height: 48vh !important;
         overflow-y: auto !important;
       }
     }
@@ -354,7 +357,6 @@
 
   <div id="board-wrapper">
     <div id="pdf-render-container">
-      <!-- Default Starting Sheet: Pure White -->
       <div class="page-wrapper bg-white" data-page="1">
         <canvas class="draw-canvas-layer"></canvas>
       </div>
@@ -463,7 +465,7 @@
     let currentScale = 1.0;
     let currentTool = 'pen'; 
     let currentShape = 'none';
-    let currentBg = 'white'; // Default background: Pure White
+    let currentBg = 'white';
     let currentStamp = '⭐';
     let brushThickness = 4;
     let activeCanvas = null;
@@ -707,7 +709,7 @@
       textEl.contentEditable = "true";
       textEl.style.left = `${x}px`;
       textEl.style.top = `${y}px`;
-      textEl.style.color = document.getElementById('pen-color').value;
+      textEl.style.color = document.getElementById('pen-color').value === '#ffffff' ? '#0f172a' : document.getElementById('pen-color').value;
       textEl.style.fontSize = `18px`;
 
       wrapper.appendChild(textEl);
@@ -913,7 +915,6 @@
       canvas.addEventListener('touchend', stopDraw);
     }
 
-    // Auto setup on startup & orientation change
     window.addEventListener('resize', () => {
       document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w));
     });
