@@ -73,7 +73,6 @@
       width: 100%;
     }
 
-    /* Responsive HD Page Box */
     .page-wrapper {
       position: relative; 
       width: 900px;
@@ -98,7 +97,6 @@
     .pdf-canvas-layer { z-index: 1; pointer-events: none; }
     .draw-canvas-layer { z-index: 2; pointer-events: auto; touch-action: none; background: transparent; }
 
-    /* On-Screen Text Box */
     .board-text-input {
       position: absolute; 
       z-index: 9999; 
@@ -120,7 +118,6 @@
       word-break: break-word;
     }
 
-    /* Board Background Options */
     .bg-white { background-color: #ffffff !important; }
     .bg-yellow { background-color: #fef9c3 !important; }
     .bg-blue { background-color: #eff6ff !important; }
@@ -141,7 +138,6 @@
       border-radius: 16px;
     }
 
-    /* Desktop Left Toolbar */
     #sidebar-container {
       position: fixed; 
       top: 14px; 
@@ -249,6 +245,58 @@
     }
     .pop-item:hover { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
 
+    /* Interactive Calculator Popup */
+    #calc-panel {
+      position: fixed;
+      top: 60px;
+      left: 70px;
+      z-index: 999998;
+      width: 230px;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #calc-panel.open { display: flex; }
+
+    .calc-screen {
+      width: 100%;
+      height: 38px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: right;
+      padding: 6px 10px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      outline: none;
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .calc-btn {
+      padding: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.1s;
+    }
+    .calc-btn:hover { background: #f1f5f9; }
+    .calc-btn:active { transform: scale(0.96); }
+    .calc-btn.op-btn { background: #eff6ff; color: var(--primary); }
+    .calc-btn.eq-btn { background: var(--primary); color: #ffffff; grid-column: span 2; }
+    .calc-btn.c-btn { background: #fee2e2; color: #ef4444; }
+
     .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .stamp-btn { 
       font-size: 20px; 
@@ -290,7 +338,6 @@
     }
     input[type="file"] { display: none; }
 
-    /* Mobile Responsive Classes */
     body.is-mobile #board-wrapper {
       padding: 55px 6px 90px 6px !important;
     }
@@ -334,13 +381,14 @@
       transform: none !important; 
       padding: 4px 8px !important;
     }
-    body.is-mobile .pop-panel {
+    body.is-mobile .pop-panel,
+    body.is-mobile #calc-panel {
       top: auto !important; 
       bottom: 68px !important; 
       left: 10px !important; 
       right: 10px !important;
       min-width: auto !important;
-      max-height: 48vh !important;
+      max-height: 52vh !important;
       overflow-y: auto !important;
     }
   </style>
@@ -365,6 +413,7 @@
       <button class="t-btn" id="btn-brush" title="Paint Brush" style="color: #ec4899;"><i class="fa-solid fa-paintbrush"></i></button>
       <button class="t-btn" id="btn-text" title="Text Note" style="color: #0284c7;"><i class="fa-solid fa-font"></i></button>
       <button class="t-btn" id="btn-stamp-trigger" title="Stamps" style="color: #10b981;"><i class="fa-solid fa-stamp"></i></button>
+      <button class="t-btn" id="btn-calc-trigger" title="Calculator" style="color: #8b5cf6;"><i class="fa-solid fa-calculator"></i></button>
       <button class="t-btn" id="btn-eraser" title="Eraser"><i class="fa-solid fa-eraser"></i></button>
 
       <div class="separator"></div>
@@ -387,6 +436,40 @@
       <button class="t-btn" id="btn-undo" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
       <button class="t-btn" id="btn-export" title="Save Board Image"><i class="fa-solid fa-download"></i></button>
       <button class="t-btn" id="btn-clear" title="Clear Board" style="color: #ef4444;"><i class="fa-solid fa-trash-can"></i></button>
+    </div>
+  </div>
+
+  <!-- Calculator Popup -->
+  <div class="glass-pill" id="calc-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+      <span class="pop-title"><i class="fa-solid fa-calculator" style="margin-right: 4px;"></i> Calculator</span>
+      <i class="fa-solid fa-xmark" id="close-calc-btn" style="cursor: pointer; font-size: 13px; color: #94a3b8;"></i>
+    </div>
+    <input type="text" class="calc-screen" id="calc-display" readonly value="0">
+    <div class="calc-grid">
+      <button class="calc-btn c-btn" onclick="calcAction('C')">C</button>
+      <button class="calc-btn op-btn" onclick="calcAction('/')">÷</button>
+      <button class="calc-btn op-btn" onclick="calcAction('*')">×</button>
+      <button class="calc-btn op-btn" onclick="calcAction('-')">−</button>
+      
+      <button class="calc-btn" onclick="calcAction('7')">7</button>
+      <button class="calc-btn" onclick="calcAction('8')">8</button>
+      <button class="calc-btn" onclick="calcAction('9')">9</button>
+      <button class="calc-btn op-btn" onclick="calcAction('+')">+</button>
+      
+      <button class="calc-btn" onclick="calcAction('4')">4</button>
+      <button class="calc-btn" onclick="calcAction('5')">5</button>
+      <button class="calc-btn" onclick="calcAction('6')">6</button>
+      <button class="calc-btn op-btn" onclick="calcAction('%')">%</button>
+      
+      <button class="calc-btn" onclick="calcAction('1')">1</button>
+      <button class="calc-btn" onclick="calcAction('2')">2</button>
+      <button class="calc-btn" onclick="calcAction('3')">3</button>
+      <button class="calc-btn" onclick="calcAction('.')">.</button>
+      
+      <button class="calc-btn" onclick="calcAction('0')">0</button>
+      <button class="calc-btn" onclick="calcAction('00')">00</button>
+      <button class="calc-btn eq-btn" onclick="calcSolve()">=</button>
     </div>
   </div>
 
@@ -459,7 +542,6 @@
         document.body.classList.remove('is-mobile');
       }
     }
-    window.addEventListener('resize', checkAndApplyDeviceLayout);
     checkAndApplyDeviceLayout();
 
     if (window.pdfjsLib) {
@@ -497,6 +579,7 @@
     const bgPanel = document.getElementById('bg-panel');
     const strokePanel = document.getElementById('stroke-panel');
     const stampPanel = document.getElementById('stamp-panel');
+    const calcPanel = document.getElementById('calc-panel');
 
     // UI Toggles
     eyeBtn.addEventListener('click', () => {
@@ -510,8 +593,43 @@
       bgPanel.classList.remove('open');
       strokePanel.classList.remove('open');
       stampPanel.classList.remove('open');
+      calcPanel.classList.remove('open');
     }
     document.addEventListener('click', () => closeAllPanels());
+
+    // Calculator Logic
+    document.getElementById('btn-calc-trigger').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = calcPanel.classList.contains('open');
+      closeAllPanels();
+      if (!isOpen) calcPanel.classList.add('open');
+    });
+
+    document.getElementById('close-calc-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      calcPanel.classList.remove('open');
+    });
+
+    function calcAction(val) {
+      const display = document.getElementById('calc-display');
+      if (val === 'C') {
+        display.value = '0';
+      } else if (display.value === '0' && val !== '.') {
+        display.value = val;
+      } else {
+        display.value += val;
+      }
+    }
+
+    function calcSolve() {
+      const display = document.getElementById('calc-display');
+      try {
+        const cleanExpr = display.value.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+        display.value = Function(`'use strict'; return (${cleanExpr})`)();
+      } catch (err) {
+        display.value = 'Error';
+      }
+    }
 
     document.getElementById('btn-stroke-trigger').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -622,21 +740,45 @@
       boardWrapper.classList.remove('hand-grabbing');
     });
 
-    // Dynamic High-Res DPI Canvas Setup
-    function setupPage(pageWrapper) {
+    // SAFE CANVAS SETUP (Preserves Existing Drawings across Resizes)
+    function setupPage(pageWrapper, preserveContent = true) {
       const canvas = pageWrapper.querySelector('.draw-canvas-layer');
       const dpr = Math.max(window.devicePixelRatio || 1, 2.5);
       const rect = pageWrapper.getBoundingClientRect();
       const baseW = rect.width / currentScale;
       const baseH = rect.height / currentScale;
 
-      canvas.width = baseW * dpr;
-      canvas.height = baseH * dpr;
+      const targetWidth = Math.round(baseW * dpr);
+      const targetHeight = Math.round(baseH * dpr);
+
+      if (canvas.width === targetWidth && canvas.height === targetHeight) {
+        return;
+      }
+
+      let backupCanvas = null;
+      if (preserveContent && canvas.width > 0 && canvas.height > 0) {
+        backupCanvas = document.createElement('canvas');
+        backupCanvas.width = canvas.width;
+        backupCanvas.height = canvas.height;
+        backupCanvas.getContext('2d').drawImage(canvas, 0, 0);
+      }
+
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
 
-      historyMap.set(canvas, []);
+      if (backupCanvas) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(backupCanvas, 0, 0);
+        ctx.restore();
+      }
+
+      if (!historyMap.has(canvas)) {
+        historyMap.set(canvas, []);
+      }
       activeCanvas = canvas;
       attachDrawing(canvas, pageWrapper);
     }
@@ -646,7 +788,7 @@
       pageWrapper.className = `page-wrapper bg-${currentBg}`;
       pageWrapper.innerHTML = `<canvas class="draw-canvas-layer"></canvas>`;
       renderContainer.appendChild(pageWrapper);
-      setupPage(pageWrapper);
+      setupPage(pageWrapper, false);
       pageWrapper.scrollIntoView({ behavior: 'smooth' });
     });
 
@@ -671,7 +813,7 @@
       }
     });
 
-    // ULTRA HD PDF RENDERING ENGINE (Crystal Clear Fix)
+    // PDF Import
     document.getElementById('pdf-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && file.type === "application/pdf") {
@@ -684,9 +826,7 @@
 
             for (let i = 1; i <= doc.numPages; i++) {
               doc.getPage(i).then(page => {
-                // Layout Viewport for page container
                 const viewport = page.getViewport({ scale: 1.0 });
-                // High-Resolution Viewport for rendering crisp text
                 const hdViewport = page.getViewport({ scale: 1.0 * dpr });
 
                 const pageWrapper = document.createElement('div');
@@ -694,14 +834,12 @@
                 pageWrapper.style.width = `${viewport.width}px`;
                 pageWrapper.style.height = `${viewport.height}px`;
 
-                // HD PDF Canvas
                 const pCanvas = document.createElement('canvas');
                 pCanvas.className = 'pdf-canvas-layer';
                 pCanvas.width = hdViewport.width;
                 pCanvas.height = hdViewport.height;
                 const pCtx = pCanvas.getContext('2d');
 
-                // HD Draw Canvas
                 const dCanvas = document.createElement('canvas');
                 dCanvas.className = 'draw-canvas-layer';
                 dCanvas.width = hdViewport.width;
@@ -713,7 +851,6 @@
                 pageWrapper.appendChild(dCanvas);
                 renderContainer.appendChild(pageWrapper);
 
-                // Render Crisp HD PDF Text
                 page.render({ 
                   canvasContext: pCtx, 
                   viewport: hdViewport 
@@ -730,6 +867,7 @@
       }
     });
 
+    // Inline Text Tool
     function createInlineTextBox(wrapper, canvas, x, y) {
       const existing = wrapper.querySelector('.board-text-input');
       if (existing) existing.remove();
@@ -1049,7 +1187,7 @@
 
           if (currentShape === 'rect') ctx.strokeRect(startX, startY, w, h);
           else if (currentShape === 'circle') { ctx.arc(startX, startY, Math.sqrt(w*w + h*h), 0, 2*Math.PI); ctx.stroke(); }
-          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke(); }
           else if (currentShape === 'arrow') {
             ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
             let angle = Math.atan2(h, w);
@@ -1070,11 +1208,16 @@
       canvas.addEventListener('mouseup', handleMouseUp);
     }
 
+    let resizeTimer;
     window.addEventListener('resize', () => {
-      document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w));
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        checkAndApplyDeviceLayout();
+        document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w, true));
+      }, 100);
     });
 
-    document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w));
+    document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w, false));
   </script>
 </body>
 </html>
