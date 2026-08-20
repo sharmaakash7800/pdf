@@ -68,7 +68,7 @@
       gap: 20px; 
       align-items: center; 
       transform-origin: top center;
-      transition: transform 0.15s ease-out;
+      transition: transform 0.05s ease-out;
       width: 100%;
     }
 
@@ -95,7 +95,6 @@
     .pdf-canvas-layer { z-index: 1; pointer-events: none; }
     .draw-canvas-layer { z-index: 2; pointer-events: auto; touch-action: none; background: transparent; }
 
-    /* On-Screen Text Box */
     .board-text-input {
       position: absolute; 
       z-index: 10; 
@@ -115,7 +114,6 @@
       word-break: break-word;
     }
 
-    /* Board Themes */
     .bg-white { background-color: #ffffff !important; }
     .bg-yellow { background-color: #fef9c3 !important; }
     .bg-blue { background-color: #eff6ff !important; }
@@ -127,7 +125,6 @@
       background-size: 20px 20px !important;
     }
 
-    /* Glass UI */
     .glass-pill {
       background: var(--glass-bg); 
       backdrop-filter: blur(16px);
@@ -137,7 +134,6 @@
       border-radius: 16px;
     }
 
-    /* DESKTOP TOOLBAR (Large Screens) */
     #sidebar-container {
       position: fixed; 
       top: 14px; 
@@ -210,7 +206,6 @@
       flex-shrink: 0; 
     }
 
-    /* Popups */
     .pop-panel {
       position: fixed; 
       top: 60px; 
@@ -263,7 +258,6 @@
     .stroke-slider-wrap span { font-size: 11px; font-weight: 600; color: var(--text-muted); }
     .stroke-slider-wrap input { width: 100%; cursor: pointer; }
 
-    /* Zoom Dock */
     #bottom-dock {
       position: fixed; 
       bottom: 16px; 
@@ -287,7 +281,6 @@
     }
     input[type="file"] { display: none; }
 
-    /* GUARANTEED MOBILE DOCK (Triggers on all Mobile/Tablets & Screen <= 960px) */
     @media screen and (max-width: 960px), (pointer: coarse) and (orientation: portrait) {
       #board-wrapper {
         padding: 55px 6px 85px 6px !important;
@@ -299,7 +292,6 @@
         max-width: 100% !important;
       }
 
-      /* Move Sidebar to Bottom Horizontal Bar */
       #sidebar-container {
         top: auto !important; 
         bottom: 12px !important; 
@@ -330,7 +322,6 @@
         margin: 0 2px !important; 
       }
 
-      /* Zoom Dock moved to Top-Right */
       #bottom-dock {
         top: 10px !important; 
         bottom: auto !important; 
@@ -340,7 +331,6 @@
         padding: 4px 8px !important;
       }
 
-      /* Popups open upwards from bottom bar */
       .pop-panel {
         top: auto !important; 
         bottom: 66px !important; 
@@ -475,10 +465,17 @@
     let snapshot = null;
     const historyMap = new WeakMap();
 
+    // Hand Tool variables
     const boardWrapper = document.getElementById('board-wrapper');
     let isPanning = false;
     let panStartX = 0, panStartY = 0;
     let scrollLeft = 0, scrollTop = 0;
+
+    // Multi-touch Pinch to Zoom variables
+    let isPinching = false;
+    let initialPinchDist = 0;
+    let initialScale = 1.0;
+    let pinchMidX = 0, pinchMidY = 0;
 
     const renderContainer = document.getElementById('pdf-render-container');
     const mainToolbar = document.getElementById('main-toolbar');
@@ -588,7 +585,7 @@
       });
     });
 
-    // Hand Tool Panning
+    // Hand Tool Mouse Panning
     boardWrapper.addEventListener('mousedown', (e) => {
       if (currentTool !== 'hand') return;
       isPanning = true;
@@ -623,7 +620,6 @@
       attachDrawing(canvas, pageWrapper);
     }
 
-    // Add Blank Sheet / Page
     document.getElementById('btn-add-sheet').addEventListener('click', () => {
       const pageWrapper = document.createElement('div');
       pageWrapper.className = `page-wrapper bg-${currentBg}`;
@@ -633,7 +629,6 @@
       pageWrapper.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Insert Image
     document.getElementById('image-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && activeCanvas) {
@@ -655,7 +650,6 @@
       }
     });
 
-    // PDF Import
     document.getElementById('pdf-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && file.type === "application/pdf") {
@@ -699,7 +693,6 @@
       }
     });
 
-    // Inline Text Tool
     function createInlineTextBox(wrapper, canvas, x, y) {
       const existing = wrapper.querySelector('.board-text-input');
       if (existing) existing.remove();
@@ -709,7 +702,7 @@
       textEl.contentEditable = "true";
       textEl.style.left = `${x}px`;
       textEl.style.top = `${y}px`;
-      textEl.style.color = document.getElementById('pen-color').value === '#ffffff' ? '#0f172a' : document.getElementById('pen-color').value;
+      textEl.style.color = document.getElementById('pen-color').value;
       textEl.style.fontSize = `18px`;
 
       wrapper.appendChild(textEl);
@@ -739,7 +732,6 @@
       textEl.addEventListener('blur', finalizeText);
     }
 
-    // Save & Undo History
     function saveHistory(canvas) {
       const history = historyMap.get(canvas) || [];
       const ctx = canvas.getContext('2d');
@@ -768,10 +760,9 @@
       document.querySelectorAll('.board-text-input').forEach(t => t.remove());
     });
 
-    // Content Zoom
     function applyZoom(delta) {
       const newScale = currentScale + delta;
-      if (newScale >= 0.4 && newScale <= 3.0) {
+      if (newScale >= 0.3 && newScale <= 3.5) {
         currentScale = Math.round(newScale * 100) / 100;
         renderContainer.style.transform = `scale(${currentScale})`;
         document.getElementById('zoom-text').textContent = `${Math.round(currentScale * 100)}%`;
@@ -781,7 +772,6 @@
     document.getElementById('zoom-in').addEventListener('click', () => applyZoom(0.15));
     document.getElementById('zoom-out').addEventListener('click', () => applyZoom(-0.15));
 
-    // Export PNG
     document.getElementById('btn-export').addEventListener('click', () => {
       const page = document.querySelector('.page-wrapper');
       if (!page) return;
@@ -804,25 +794,140 @@
       link.click();
     });
 
-    // Drawing Engine Listener
+    // Multi-Touch Distance & Midpoint Formula
+    function getTouchDistance(t1, t2) {
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      return Math.hypot(dx, dy);
+    }
+
+    function getTouchMidpoint(t1, t2) {
+      return {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2
+      };
+    }
+
+    // Touch & Drawing Engine
     function attachDrawing(canvas, wrapper) {
       const ctx = canvas.getContext('2d');
 
-      function getPos(e) {
+      function getPos(clientX, clientY) {
         const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         return {
           x: (clientX - rect.left) / currentScale,
           y: (clientY - rect.top) / currentScale
         };
       }
 
-      function startDraw(e) {
-        if (currentTool === 'hand') return;
+      // Touch Handlers with 2-Finger Pinch Zoom Engine
+      function handleTouchStart(e) {
+        if (e.touches.length === 2) {
+          // 2-Finger Pinch Init
+          isDrawing = false;
+          isPinching = true;
+          initialPinchDist = getTouchDistance(e.touches[0], e.touches[1]);
+          initialScale = currentScale;
+          const mid = getTouchMidpoint(e.touches[0], e.touches[1]);
+          pinchMidX = mid.x;
+          pinchMidY = mid.y;
+          scrollLeft = boardWrapper.scrollLeft;
+          scrollTop = boardWrapper.scrollTop;
+          return;
+        }
+
+        if (e.touches.length === 1) {
+          if (currentTool === 'hand') {
+            isPanning = true;
+            panStartX = e.touches[0].pageX - boardWrapper.offsetLeft;
+            panStartY = e.touches[0].pageY - boardWrapper.offsetTop;
+            scrollLeft = boardWrapper.scrollLeft;
+            scrollTop = boardWrapper.scrollTop;
+            return;
+          }
+
+          if (e.cancelable) e.preventDefault();
+          activeCanvas = canvas;
+          const pos = getPos(e.touches[0].clientX, e.touches[0].clientY);
+          startX = pos.x; startY = pos.y;
+          lastX = pos.x; lastY = pos.y;
+
+          if (currentTool === 'stamp') {
+            ctx.font = `32px Arial, sans-serif`;
+            ctx.fillText(currentStamp, pos.x - 16, pos.y + 16);
+            saveHistory(canvas);
+            return;
+          }
+
+          if (currentTool === 'text') {
+            createInlineTextBox(wrapper, canvas, pos.x, pos.y);
+            return;
+          }
+
+          isDrawing = true;
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      function handleTouchMove(e) {
+        if (isPinching && e.touches.length === 2) {
+          if (e.cancelable) e.preventDefault();
+          
+          // Calculate Zoom Factor
+          const currentDist = getTouchDistance(e.touches[0], e.touches[1]);
+          const scaleDiff = (currentDist / initialPinchDist);
+          const targetScale = Math.min(Math.max(initialScale * scaleDiff, 0.4), 3.5);
+          
+          currentScale = Math.round(targetScale * 100) / 100;
+          renderContainer.style.transform = `scale(${currentScale})`;
+          document.getElementById('zoom-text').textContent = `${Math.round(currentScale * 100)}%`;
+
+          // Pan while zooming
+          const currentMid = getTouchMidpoint(e.touches[0], e.touches[1]);
+          const dx = currentMid.x - pinchMidX;
+          const dy = currentMid.y - pinchMidY;
+          boardWrapper.scrollLeft = scrollLeft - dx;
+          boardWrapper.scrollTop = scrollTop - dy;
+          return;
+        }
+
+        if (isPanning && e.touches.length === 1) {
+          const x = e.touches[0].pageX - boardWrapper.offsetLeft;
+          const y = e.touches[0].pageY - boardWrapper.offsetTop;
+          boardWrapper.scrollLeft = scrollLeft - (x - panStartX);
+          boardWrapper.scrollTop = scrollTop - (y - panStartY);
+          return;
+        }
+
+        if (!isDrawing || activeCanvas !== canvas || e.touches.length !== 1) return;
         if (e.cancelable) e.preventDefault();
+        
+        const pos = getPos(e.touches[0].clientX, e.touches[0].clientY);
+        drawOnCanvas(pos.x, pos.y, ctx);
+      }
+
+      function handleTouchEnd(e) {
+        if (isPinching) {
+          isPinching = false;
+          return;
+        }
+        if (isPanning) {
+          isPanning = false;
+          return;
+        }
+        if (isDrawing) {
+          isDrawing = false;
+          saveHistory(canvas);
+        }
+      }
+
+      // Mouse Handlers
+      function handleMouseDown(e) {
+        if (currentTool === 'hand') return;
         activeCanvas = canvas;
-        const pos = getPos(e);
+        const pos = getPos(e.clientX, e.clientY);
         startX = pos.x; startY = pos.y;
         lastX = pos.x; lastY = pos.y;
 
@@ -844,10 +949,21 @@
         snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
       }
 
-      function draw(e) {
+      function handleMouseMove(e) {
         if (!isDrawing || activeCanvas !== canvas) return;
-        if (e.cancelable) e.preventDefault();
-        const pos = getPos(e);
+        const pos = getPos(e.clientX, e.clientY);
+        drawOnCanvas(pos.x, pos.y, ctx);
+      }
+
+      function handleMouseUp() {
+        if (isDrawing) {
+          isDrawing = false;
+          saveHistory(canvas);
+        }
+      }
+
+      // Unified Drawing Logic
+      function drawOnCanvas(x, y, ctx) {
         const color = document.getElementById('pen-color').value;
 
         if (currentTool === 'pen') {
@@ -855,14 +971,14 @@
           ctx.strokeStyle = color;
           ctx.lineWidth = brushThickness;
           ctx.lineCap = 'round';
-          ctx.lineTo(pos.x, pos.y);
+          ctx.lineTo(x, y);
           ctx.stroke();
         } else if (currentTool === 'highlighter') {
           ctx.globalAlpha = 0.35;
           ctx.strokeStyle = color;
           ctx.lineWidth = brushThickness * 3.5;
           ctx.lineCap = 'square';
-          ctx.lineTo(pos.x, pos.y);
+          ctx.lineTo(x, y);
           ctx.stroke();
           ctx.globalAlpha = 1.0;
         } else if (currentTool === 'brush') {
@@ -872,47 +988,41 @@
           ctx.lineCap = 'round';
           ctx.beginPath();
           ctx.moveTo(lastX, lastY);
-          ctx.lineTo(pos.x, pos.y);
+          ctx.lineTo(x, y);
           ctx.stroke();
-          lastX = pos.x; lastY = pos.y;
+          lastX = x; lastY = y;
           ctx.globalAlpha = 1.0;
         } else if (currentTool === 'eraser') {
-          ctx.clearRect(pos.x - (brushThickness * 2), pos.y - (brushThickness * 2), brushThickness * 4, brushThickness * 4);
+          ctx.clearRect(x - (brushThickness * 2), y - (brushThickness * 2), brushThickness * 4, brushThickness * 4);
         } else if (currentTool === 'shape') {
           ctx.putImageData(snapshot, 0, 0);
           ctx.strokeStyle = color;
           ctx.lineWidth = brushThickness;
           ctx.beginPath();
-          const w = pos.x - startX, h = pos.y - startY;
+          const w = x - startX, h = y - startY;
 
           if (currentShape === 'rect') ctx.strokeRect(startX, startY, w, h);
           else if (currentShape === 'circle') { ctx.arc(startX, startY, Math.sqrt(w*w + h*h), 0, 2*Math.PI); ctx.stroke(); }
-          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+          else if (currentShape === 'line') { ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke(); }
           else if (currentShape === 'arrow') {
-            ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            ctx.moveTo(startX, startY); ctx.lineTo(x, y); ctx.stroke();
             let angle = Math.atan2(h, w);
-            ctx.lineTo(pos.x - 12 * Math.cos(angle - Math.PI / 6), pos.y - 12 * Math.sin(angle - Math.PI / 6));
-            ctx.moveTo(pos.x, pos.y);
-            ctx.lineTo(pos.x - 12 * Math.cos(angle + Math.PI / 6), pos.y - 12 * Math.sin(angle + Math.PI / 6));
+            ctx.lineTo(x - 12 * Math.cos(angle - Math.PI / 6), y - 12 * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - 12 * Math.cos(angle + Math.PI / 6), y - 12 * Math.sin(angle + Math.PI / 6));
             ctx.stroke();
           }
         }
       }
 
-      function stopDraw() {
-        if (isDrawing) {
-          isDrawing = false;
-          saveHistory(canvas);
-        }
-      }
+      // Event Listeners Registration
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd);
 
-      canvas.addEventListener('mousedown', startDraw);
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stopDraw);
-
-      canvas.addEventListener('touchstart', startDraw, { passive: false });
-      canvas.addEventListener('touchmove', draw, { passive: false });
-      canvas.addEventListener('touchend', stopDraw);
+      canvas.addEventListener('mousedown', handleMouseDown);
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseup', handleMouseUp);
     }
 
     window.addEventListener('resize', () => {
