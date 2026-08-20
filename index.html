@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TeachBoard Pro Max</title>
+  <title>BlackBoard Pro Max</title>
   
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#064e3b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="BlackBoard">
 
-  <!-- PDF.js Engine -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #2563eb;
-      --glass-bg: rgba(255, 255, 255, 0.95);
+      --primary: #10b981;
+      --glass-bg: rgba(255, 255, 255, 0.96);
       --glass-border: rgba(255, 255, 255, 0.6);
-      --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+      --glass-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35);
       --text-main: #1e293b;
       --text-muted: #64748b;
     }
@@ -40,10 +40,10 @@
       overflow: hidden;
       background-color: #0f172a; 
       color: var(--text-main);
-      touch-action: none; /* Prevents whole screen/toolbar browser zoom */
+      touch-action: none;
     }
 
-    /* Scrollable Board Viewport */
+    /* Scrollable Canvas Viewport */
     #board-wrapper { 
       position: absolute;
       top: 0;
@@ -54,7 +54,7 @@
       display: flex; 
       flex-direction: column; 
       align-items: center; 
-      padding: 40px 0 120px 0;
+      padding: 24px 12px 120px 12px;
       background: radial-gradient(circle at 50% 50%, #1e293b 0%, #0f172a 100%);
       -webkit-overflow-scrolling: touch;
       cursor: default;
@@ -63,23 +63,25 @@
     #board-wrapper.hand-active { cursor: grab !important; }
     #board-wrapper.hand-grabbing { cursor: grabbing !important; }
 
-    /* Only this container scales on zoom */
     #pdf-render-container { 
       display: flex; 
       flex-direction: column; 
-      gap: 24px; 
+      gap: 20px; 
       align-items: center; 
       transform-origin: top center;
       transition: transform 0.15s ease-out;
+      width: 100%;
     }
 
+    /* Responsive Whiteboard Canvas Box */
     .page-wrapper {
       position: relative; 
-      width: 920px;
-      height: 600px;
+      width: 900px;
+      height: 580px;
+      max-width: calc(100vw - 24px);
       box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.7);
-      border-radius: 8px; 
-      background: #ffffff;
+      border-radius: 12px; 
+      background: #064e3b;
       flex-shrink: 0;
     }
 
@@ -90,20 +92,20 @@
       left: 0; 
       width: 100%; 
       height: 100%; 
-      border-radius: 8px; 
+      border-radius: 12px; 
     }
     .pdf-canvas-layer { z-index: 1; pointer-events: none; }
     .draw-canvas-layer { z-index: 2; pointer-events: auto; touch-action: none; background: transparent; }
 
-    /* On-Screen Text Input Box */
+    /* On-Screen Text Box */
     .board-text-input {
       position: absolute; 
       z-index: 10; 
-      min-width: 140px; 
-      min-height: 36px;
+      min-width: 130px; 
+      min-height: 34px;
       padding: 6px 10px; 
       border-radius: 6px; 
-      border: 2px dashed #2563eb;
+      border: 2px dashed #10b981;
       background: rgba(255, 255, 255, 0.95); 
       outline: none;
       font-weight: 600; 
@@ -115,19 +117,19 @@
       word-break: break-word;
     }
 
-    /* Backgrounds */
+    /* Board Background Options */
+    .bg-greenboard { background-color: #064e3b !important; }
+    .bg-dark { background-color: #1a1a1a !important; }
     .bg-white { background-color: #ffffff !important; }
     .bg-yellow { background-color: #fef9c3 !important; }
     .bg-blue { background-color: #eff6ff !important; }
-    .bg-greenboard { background-color: #064e3b !important; }
-    .bg-dark { background-color: #1a1a1a !important; }
-    .bg-grid-white { 
-      background-color: #ffffff !important; 
-      background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px) !important;
-      background-size: 20px 20px !important;
+    .bg-grid-dark { 
+      background-color: #064e3b !important; 
+      background-image: radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px) !important;
+      background-size: 24px 24px !important;
     }
 
-    /* FIXED NON-SCALING TOOLBAR (Never Zooms) */
+    /* Frosted Glass UI */
     .glass-pill {
       background: var(--glass-bg); 
       backdrop-filter: blur(16px);
@@ -137,47 +139,44 @@
       border-radius: 16px;
     }
 
+    /* DESKTOP TOOLBAR (Left Stacked) */
     #sidebar-container {
-      position: fixed !important; 
-      top: 14px !important; 
-      left: 14px !important; 
-      z-index: 999999 !important;
-      display: flex !important; 
-      flex-direction: column !important; 
-      align-items: center !important; 
-      gap: 8px !important;
-      width: 46px !important;
-      transform: none !important; /* Locks zoom scale */
+      position: fixed; 
+      top: 14px; 
+      left: 14px; 
+      z-index: 999999;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      gap: 8px;
+      width: 46px;
     }
 
     #eye-btn {
-      width: 40px !important; 
-      height: 40px !important; 
-      min-width: 40px !important;
-      min-height: 40px !important;
-      border-radius: 50% !important; 
-      color: var(--primary) !important;
-      border: 1px solid var(--glass-border) !important; 
-      display: flex !important; 
-      align-items: center !important;
-      justify-content: center !important; 
-      font-size: 16px !important; 
-      cursor: pointer !important;
-      flex-shrink: 0 !important;
+      width: 40px; 
+      height: 40px; 
+      border-radius: 50%; 
+      color: var(--primary);
+      border: 1px solid var(--glass-border); 
+      display: flex; 
+      align-items: center;
+      justify-content: center; 
+      font-size: 16px; 
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
     #main-toolbar {
-      width: 46px !important; 
-      max-width: 46px !important;
-      display: flex !important; 
-      flex-direction: column !important; 
-      align-items: center !important; 
-      padding: 8px 0 !important; 
-      gap: 4px !important;
-      max-height: 82vh !important; 
-      overflow-y: auto !important; 
-      overflow-x: hidden !important;
-      flex-shrink: 0 !important;
+      width: 46px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      padding: 8px 0; 
+      gap: 4px;
+      max-height: 82vh; 
+      overflow-y: auto; 
+      overflow-x: hidden;
+      flex-shrink: 0;
     }
     #main-toolbar::-webkit-scrollbar { display: none; }
 
@@ -187,46 +186,43 @@
       background: transparent; 
       color: var(--text-muted); 
       border: none; 
-      width: 34px !important; 
-      height: 34px !important; 
-      min-width: 34px !important;
-      min-height: 34px !important;
+      width: 36px; 
+      height: 36px; 
       border-radius: 10px; 
       display: flex; 
       align-items: center; 
       justify-content: center;
-      font-size: 14px !important; 
+      font-size: 15px; 
       cursor: pointer; 
       transition: 0.15s ease;
-      flex-shrink: 0 !important;
+      flex-shrink: 0;
     }
-    .t-btn:hover { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
+    .t-btn:hover { background: rgba(16, 185, 129, 0.15); color: var(--primary); }
     .t-btn.active { 
       background: var(--primary) !important; 
       color: #ffffff !important; 
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); 
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); 
     }
 
     .separator { 
-      width: 20px !important; 
-      height: 1px !important; 
+      width: 20px; 
+      height: 1px; 
       background: rgba(0, 0, 0, 0.1); 
       margin: 2px 0; 
-      flex-shrink: 0 !important; 
+      flex-shrink: 0; 
     }
 
     /* Popups */
     .pop-panel {
-      position: fixed !important; 
-      top: 60px !important; 
-      left: 70px !important; 
-      z-index: 999998 !important; 
+      position: fixed; 
+      top: 60px; 
+      left: 70px; 
+      z-index: 999998; 
       min-width: 220px; 
       padding: 10px; 
       display: none; 
       flex-direction: column; 
       gap: 8px;
-      transform: none !important;
     }
     .pop-panel.open { display: flex; }
 
@@ -249,12 +245,12 @@
       font-weight: 500; 
       cursor: pointer;
     }
-    .pop-item:hover { background: rgba(37, 99, 235, 0.12); color: var(--primary); }
+    .pop-item:hover { background: rgba(16, 185, 129, 0.12); color: var(--primary); }
 
     /* Stamps */
     .stamp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .stamp-btn { 
-      font-size: 22px; 
+      font-size: 20px; 
       border: 1px solid #e2e8f0; 
       border-radius: 8px; 
       background: #fff; 
@@ -263,20 +259,20 @@
       text-align: center; 
       transition: 0.15s;
     }
-    .stamp-btn:hover { background: #eff6ff; border-color: var(--primary); transform: scale(1.1); }
-    .stamp-btn.active-stamp { border-color: var(--primary); background: #dbeafe; }
+    .stamp-btn:hover { background: #ecfdf5; border-color: var(--primary); }
+    .stamp-btn.active-stamp { border-color: var(--primary); background: #d1fae5; }
 
     .stroke-slider-wrap { padding: 4px 6px; display: flex; flex-direction: column; gap: 6px; }
     .stroke-slider-wrap span { font-size: 11px; font-weight: 600; color: var(--text-muted); }
     .stroke-slider-wrap input { width: 100%; cursor: pointer; }
 
-    /* FIXED NON-SCALING BOTTOM DOCK */
+    /* Zoom Dock */
     #bottom-dock {
-      position: fixed !important; 
-      bottom: 16px !important; 
-      left: 50% !important; 
-      transform: translateX(-50%) !important; 
-      z-index: 999998 !important; 
+      position: fixed; 
+      bottom: 16px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      z-index: 999998; 
       padding: 6px 14px; 
       display: flex; 
       gap: 8px; 
@@ -285,21 +281,85 @@
 
     input[type="color"] { 
       border: 2px solid #ffffff; 
-      width: 24px !important; 
-      height: 24px !important; 
+      width: 24px; 
+      height: 24px; 
       border-radius: 50%; 
       cursor: pointer; 
       background: none; 
-      flex-shrink: 0 !important; 
+      flex-shrink: 0; 
     }
     input[type="file"] { display: none; }
+
+    /* MOBILE-SPECIFIC RESPONSIVE OVERRIDES (Screen width <= 768px) */
+    @media (max-width: 768px) {
+      #board-wrapper {
+        padding: 60px 8px 85px 8px !important;
+      }
+      
+      .page-wrapper {
+        width: 100% !important;
+        height: 72vh !important; /* Maximizes portrait mobile height */
+        max-width: 100% !important;
+      }
+
+      /* Relocate Toolbar to Bottom Horizontal Dock */
+      #sidebar-container {
+        top: auto !important; 
+        bottom: 10px !important; 
+        left: 50% !important; 
+        transform: translateX(-50%) !important;
+        width: calc(100vw - 20px) !important;
+        max-width: 480px !important;
+        flex-direction: row !important; 
+        justify-content: space-between !important;
+        gap: 6px !important;
+      }
+
+      #main-toolbar {
+        flex-direction: row !important; 
+        width: calc(100% - 46px) !important; 
+        max-width: none !important;
+        height: 48px !important; 
+        padding: 0 8px !important; 
+        overflow-x: auto !important; 
+        overflow-y: hidden !important;
+        gap: 8px !important;
+      }
+
+      .separator { 
+        width: 1px !important; 
+        height: 22px !important; 
+        margin: 0 2px !important; 
+      }
+
+      /* Relocate Zoom Dock to Top-Right */
+      #bottom-dock {
+        top: 10px !important; 
+        bottom: auto !important; 
+        right: 10px !important; 
+        left: auto !important; 
+        transform: none !important; 
+        padding: 4px 10px !important;
+      }
+
+      /* Popups open upwards from bottom */
+      .pop-panel {
+        top: auto !important; 
+        bottom: 68px !important; 
+        left: 14px !important; 
+        right: 14px !important;
+        min-width: auto !important;
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <div id="board-wrapper">
     <div id="pdf-render-container">
-      <div class="page-wrapper bg-white" data-page="1">
+      <div class="page-wrapper bg-greenboard" data-page="1">
         <canvas class="draw-canvas-layer"></canvas>
       </div>
     </div>
@@ -311,36 +371,36 @@
     <div id="main-toolbar" class="glass-pill">
       <!-- Navigation & Main Tools -->
       <button class="t-btn" id="btn-hand" title="Hand Tool (Pan View)"><i class="fa-solid fa-hand"></i></button>
-      <button class="t-btn active" id="btn-pen" title="Fine Pen"><i class="fa-solid fa-pen-nib"></i></button>
+      <button class="t-btn active" id="btn-pen" title="Chalk / Fine Pen"><i class="fa-solid fa-pen-nib"></i></button>
       <button class="t-btn" id="btn-highlighter" title="Highlighter"><i class="fa-solid fa-highlighter"></i></button>
       <button class="t-btn" id="btn-brush" title="Paint Brush" style="color: #ec4899;"><i class="fa-solid fa-paintbrush"></i></button>
-      <button class="t-btn" id="btn-text" title="Text Note" style="color: #2563eb;"><i class="fa-solid fa-font"></i></button>
+      <button class="t-btn" id="btn-text" title="Text Note" style="color: #0284c7;"><i class="fa-solid fa-font"></i></button>
       <button class="t-btn" id="btn-stamp-trigger" title="Stamps" style="color: #10b981;"><i class="fa-solid fa-stamp"></i></button>
       <button class="t-btn" id="btn-eraser" title="Eraser"><i class="fa-solid fa-eraser"></i></button>
 
       <div class="separator"></div>
 
-      <!-- Add Media & Sheets -->
-      <button class="t-btn" id="btn-add-sheet" title="Add Blank Sheet" style="color: #10b981;"><i class="fa-solid fa-file-circle-plus"></i></button>
-      <label class="t-btn" for="pdf-input" title="Browse & Import PDF" style="color: #ef4444;"><i class="fa-solid fa-file-pdf"></i></label>
+      <!-- Add Media -->
+      <button class="t-btn" id="btn-add-sheet" title="Add Blank BlackBoard" style="color: #10b981;"><i class="fa-solid fa-file-circle-plus"></i></button>
+      <label class="t-btn" for="pdf-input" title="Browse PDF Document" style="color: #ef4444;"><i class="fa-solid fa-file-pdf"></i></label>
       <input type="file" id="pdf-input" accept="application/pdf">
-      <label class="t-btn" for="image-input" title="Insert Image / Diagram" style="color: #0284c7;"><i class="fa-solid fa-image"></i></label>
+      <label class="t-btn" for="image-input" title="Insert Image" style="color: #0284c7;"><i class="fa-solid fa-image"></i></label>
       <input type="file" id="image-input" accept="image/*">
       <button class="t-btn" id="btn-shapes-trigger" title="Shapes"><i class="fa-solid fa-shapes"></i></button>
 
       <div class="separator"></div>
 
-      <!-- Style Controls -->
-      <button class="t-btn" id="btn-stroke-trigger" title="Brush Size"><i class="fa-solid fa-sliders"></i></button>
-      <input type="color" id="pen-color" value="#2563eb" title="Color">
-      <button class="t-btn" id="btn-bg-trigger" title="Background Theme"><i class="fa-solid fa-palette"></i></button>
+      <!-- Controls -->
+      <button class="t-btn" id="btn-stroke-trigger" title="Chalk / Pen Size"><i class="fa-solid fa-sliders"></i></button>
+      <input type="color" id="pen-color" value="#ffffff" title="Chalk Color">
+      <button class="t-btn" id="btn-bg-trigger" title="Board Theme"><i class="fa-solid fa-palette"></i></button>
 
       <div class="separator"></div>
 
       <!-- Actions -->
       <button class="t-btn" id="btn-undo" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
-      <button class="t-btn" id="btn-export" title="Export PNG"><i class="fa-solid fa-download"></i></button>
-      <button class="t-btn" id="btn-clear" title="Clear Canvas" style="color: #ef4444;"><i class="fa-solid fa-trash-can"></i></button>
+      <button class="t-btn" id="btn-export" title="Save Board Image"><i class="fa-solid fa-download"></i></button>
+      <button class="t-btn" id="btn-clear" title="Clear BlackBoard" style="color: #ef4444;"><i class="fa-solid fa-trash-can"></i></button>
     </div>
   </div>
 
@@ -386,17 +446,17 @@
     <div class="pop-item" data-action="arrow"><i class="fa-solid fa-arrow-right"></i> Arrow</div>
   </div>
 
-  <!-- Background Themes -->
+  <!-- Board Themes -->
   <div class="pop-panel glass-pill" id="bg-panel">
+    <div class="pop-item" data-bg="greenboard"><i class="fa-solid fa-chalkboard" style="color: #064e3b;"></i> Chalk Green</div>
+    <div class="pop-item" data-bg="grid-dark"><i class="fa-solid fa-border-all" style="color: #064e3b;"></i> Grid Blackboard</div>
+    <div class="pop-item" data-bg="dark"><i class="fa-solid fa-circle" style="color: #1a1a1a;"></i> Deep Charcoal</div>
     <div class="pop-item" data-bg="white"><i class="fa-solid fa-circle" style="color: #cbd5e1;"></i> Pure White</div>
-    <div class="pop-item" data-bg="grid-white"><i class="fa-solid fa-border-all" style="color: #64748b;"></i> Dot Grid</div>
     <div class="pop-item" data-bg="yellow"><i class="fa-solid fa-circle" style="color: #fef08a;"></i> Pastel Yellow</div>
     <div class="pop-item" data-bg="blue"><i class="fa-solid fa-circle" style="color: #bfdbfe;"></i> Pastel Blue</div>
-    <div class="pop-item" data-bg="greenboard"><i class="fa-solid fa-chalkboard" style="color: #064e3b;"></i> Blackboard</div>
-    <div class="pop-item" data-bg="dark"><i class="fa-solid fa-circle" style="color: #1a1a1a;"></i> Dark Theme</div>
   </div>
 
-  <!-- Bottom Zoom Dock -->
+  <!-- Top-Right / Bottom Zoom Dock -->
   <div id="bottom-dock" class="glass-pill">
     <button class="t-btn" id="zoom-out"><i class="fa-solid fa-minus"></i></button>
     <span id="zoom-text" style="font-size: 11px; font-weight: 700; color: var(--text-main); min-width: 36px; text-align: center;">100%</span>
@@ -411,7 +471,7 @@
     let currentScale = 1.0;
     let currentTool = 'pen'; 
     let currentShape = 'none';
-    let currentBg = 'white';
+    let currentBg = 'greenboard';
     let currentStamp = '⭐';
     let brushThickness = 4;
     let activeCanvas = null;
@@ -421,7 +481,6 @@
     let snapshot = null;
     const historyMap = new WeakMap();
 
-    // Hand Tool variables
     const boardWrapper = document.getElementById('board-wrapper');
     let isPanning = false;
     let panStartX = 0, panStartY = 0;
@@ -436,19 +495,9 @@
     const strokePanel = document.getElementById('stroke-panel');
     const stampPanel = document.getElementById('stamp-panel');
 
-    // Prevent default browser zoom on whole screen
-    window.addEventListener('wheel', (e) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        if (e.deltaY < 0) applyZoom(0.1);
-        else applyZoom(-0.1);
-      }
-    }, { passive: false });
-
     // UI Toggles
     eyeBtn.addEventListener('click', () => {
       const isHidden = mainToolbar.classList.toggle('ui-hidden');
-      bottomDock.classList.toggle('ui-hidden');
       closeAllPanels();
       eyeBtn.querySelector('i').className = isHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
     });
@@ -545,7 +594,7 @@
       });
     });
 
-    // Hand Tool Panning Logic
+    // Hand Tool Panning
     boardWrapper.addEventListener('mousedown', (e) => {
       if (currentTool !== 'hand') return;
       isPanning = true;
@@ -570,7 +619,7 @@
       boardWrapper.classList.remove('hand-grabbing');
     });
 
-    // Setup & Initialize Page Canvas
+    // Responsive Canvas Resizer
     function setupPage(pageWrapper) {
       const canvas = pageWrapper.querySelector('.draw-canvas-layer');
       const rect = pageWrapper.getBoundingClientRect();
@@ -591,7 +640,7 @@
       pageWrapper.scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Insert Image / Diagram
+    // Insert Image
     document.getElementById('image-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && activeCanvas) {
@@ -600,11 +649,11 @@
           const img = new Image();
           img.onload = function() {
             const ctx = activeCanvas.getContext('2d');
-            const maxW = Math.min(350, activeCanvas.width * 0.6);
+            const maxW = Math.min(300, activeCanvas.width * 0.7);
             const scale = maxW / img.width;
             const targetW = img.width * scale;
             const targetH = img.height * scale;
-            ctx.drawImage(img, 40, 40, targetW, targetH);
+            ctx.drawImage(img, 30, 30, targetW, targetH);
             saveHistory(activeCanvas);
           };
           img.src = evt.target.result;
@@ -613,7 +662,7 @@
       }
     });
 
-    // PDF Import Engine
+    // PDF Import
     document.getElementById('pdf-input').addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file && file.type === "application/pdf") {
@@ -624,7 +673,7 @@
             renderContainer.innerHTML = '';
             for (let i = 1; i <= doc.numPages; i++) {
               doc.getPage(i).then(page => {
-                const viewport = page.getViewport({ scale: 1.2 });
+                const viewport = page.getViewport({ scale: 1.0 });
                 const pageWrapper = document.createElement('div');
                 pageWrapper.className = 'page-wrapper';
                 pageWrapper.style.width = `${viewport.width}px`;
@@ -667,7 +716,7 @@
       textEl.contentEditable = "true";
       textEl.style.left = `${x}px`;
       textEl.style.top = `${y}px`;
-      textEl.style.color = document.getElementById('pen-color').value;
+      textEl.style.color = document.getElementById('pen-color').value === '#ffffff' ? '#0f172a' : document.getElementById('pen-color').value;
       textEl.style.fontSize = `18px`;
 
       wrapper.appendChild(textEl);
@@ -679,7 +728,7 @@
           const ctx = canvas.getContext('2d');
           const lines = text.split('\n');
           ctx.font = `600 18px Inter, sans-serif`;
-          ctx.fillStyle = textEl.style.color;
+          ctx.fillStyle = document.getElementById('pen-color').value;
           lines.forEach((line, index) => {
             ctx.fillText(line, x + 6, y + 20 + (index * 24));
           });
@@ -726,7 +775,7 @@
       document.querySelectorAll('.board-text-input').forEach(t => t.remove());
     });
 
-    // Isolated Content Zoom (Toolbar Remains 100% Fixed)
+    // Content Zoom
     function applyZoom(delta) {
       const newScale = currentScale + delta;
       if (newScale >= 0.4 && newScale <= 3.0) {
@@ -749,7 +798,7 @@
       tempCanvas.height = drawCanvas.height;
       const tCtx = tempCanvas.getContext('2d');
 
-      tCtx.fillStyle = "#ffffff";
+      tCtx.fillStyle = currentBg === 'white' ? '#ffffff' : (currentBg === 'dark' ? '#1a1a1a' : '#064e3b');
       tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
       const pdfCanvas = page.querySelector('.pdf-canvas-layer');
@@ -757,12 +806,12 @@
       tCtx.drawImage(drawCanvas, 0, 0);
 
       const link = document.createElement('a');
-      link.download = `teachboard-export-${Date.now()}.png`;
+      link.download = `blackboard-${Date.now()}.png`;
       link.href = tempCanvas.toDataURL();
       link.click();
     });
 
-    // Drawing Engine Listener (with Scale Offset Adjustment)
+    // Drawing Engine Listener
     function attachDrawing(canvas, wrapper) {
       const ctx = canvas.getContext('2d');
 
@@ -873,7 +922,11 @@
       canvas.addEventListener('touchend', stopDraw);
     }
 
-    // Initialize Default Page on Load
+    // Auto setup on startup & handle orientation change
+    window.addEventListener('resize', () => {
+      document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w));
+    });
+
     document.querySelectorAll('.page-wrapper').forEach(w => setupPage(w));
   </script>
 </body>
